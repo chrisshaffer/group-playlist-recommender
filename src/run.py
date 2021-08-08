@@ -1,7 +1,7 @@
 import sys
 import logging
 import argparse
-from recommender import SongRecommender     # the class you have to develop
+from recommender import SongRecommender
 import pandas as pd
 from log import configure_logging
 
