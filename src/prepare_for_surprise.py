@@ -6,15 +6,14 @@ def tt_preprocess():
     # Load data into pd df
     tt = load_train_triplets()
 
-    # Convert playcounts > 100 to 100
-    tt.plays = tt.plays.transform(lambda x: 100 if x > 100 else x)
+    # Saturate top 1% of plays, where 24 is 99th percentile of plays
+    tt.plays = tt.plays.transform(lambda x: 24 if x > 24 else x)
 
-    # Create 'rating' column of log10(plays)/max(log10(plays))
-    max_log_plays = np.max(np.log10(tt['plays']))
-    tt['rating'] = np.log10(tt.plays)/max_log_plays
-    
-    # Include only top 1000 tracks (20% of total data, ~10 millions entries)
-    top_tracks = tt['track_id'].value_counts()[:100].index.tolist()
+    # Create 'rating' column based on log(plays/max_plays) transformed to 1-5 scale
+    # print(np.log10(tt.plays))
+    tt['rating'] = np.log10(tt.plays)/np.log10(tt['plays'].max())*5+1
+    # Include only top 250 tracks (11% of total data, ~4.8 millions entries)
+    top_tracks = tt['track_id'].value_counts()[:250].index.tolist()
     tt = tt[tt['track_id'].isin(top_tracks)]
 
     # Drop plays

@@ -22,10 +22,10 @@ if __name__ == "__main__":
     logger = logging.getLogger('reco-cs')
 
 
-    path_train_ = args.train if args.train else "data/train_80_20.csv"
+    path_train_ = args.train if args.train else "data/train.csv"
     logger.debug("using training ratings from {}".format(path_train_))
 
-    path_requests_ = args.requests if args.requests else "data/test_80_20.csv"
+    path_requests_ = args.requests if args.requests else "data/test.csv"
     logger.debug("using requests from {}".format(path_requests_))
 
     model_name_ = args.model_name if args.model_name else "svd"

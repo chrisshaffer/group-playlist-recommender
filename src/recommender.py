@@ -31,13 +31,14 @@ class SongRecommender():
         self.logger.debug("starting fit")
 
         # processing for Surprise
-        ratings = ratings.sample(frac=.5)
+        ratings = ratings.sample(frac=1)
         ratings = Dataset.load_from_df(ratings[['user_id', 'track_id', 'rating']],
-                                       reader=Reader(rating_scale = (0,1)))
+                                       reader=Reader(rating_scale = (1,5)))
         self.trainset = ratings.build_full_trainset()
         
         if self.model_name == 'svd':
-            self.algo = SVD(lr_all=0.01)
+            # self.algo = SVD(lr_all=0.01)
+            self.algo = SVD(lr_all=0.001,n_epochs=50,n_factors=50)
         elif self.model_name == 'slopeone':
             self.algo = SlopeOne()
         elif self.model_name == 'nmf':

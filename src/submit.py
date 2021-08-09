@@ -9,23 +9,27 @@ def compute_score(predictions, actual):
     Return the average actual rating of those songs.
     """
     actual.drop(columns=['timestamp'],inplace=True)
-    # print(predictions)
-    # print(actual)
-    df = pd.merge(predictions, actual.drop(columns=['rating']), on=['user_id','track_id']).fillna(1.0)
-    #df = pd.concat([predictions.fillna(1.0), actual.actualrating], axis=1)
-
+    df = pd.merge(predictions, actual.rename(columns={'rating':'actualrating'}), on=['user_id','track_id']).fillna(1.0)
+    
     # for each user
-    g = df.groupby(['user_id','track_id']).quantile(.99)
-    print(g)
-    # # detect the top_5 % as predicted by your algorithm
+    g = df.groupby('user_id')
+
+    # detect the top 5% songs as predicted by your algorithm
+    top_5 = g.rating.transform(
+        lambda x: x >= x.quantile(.95)
+    )
+    # return the mean of the actual score on those
+    return df.actualrating[top_5==1].mean()
+    
+    # # for each user
+    # g = df.groupby(['user_id','track_id'])
+    # # # detect the top_5 % as predicted by your algorithm
     # top_5 = g.rating.transform(
     #     lambda x: x >= x.quantile(.95)
     # )
 
-    # return the mean of the actual score on those
-    return df.rating[g==1].mean()
-
-    
+    # # return the mean of the actual score on those
+    # return df.rating[g==1].mean()
     
 def compute_rmse(predictions, actual):
     # RMSE between predictions and actual ratings

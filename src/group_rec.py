@@ -2,6 +2,9 @@ import pickle
 import pandas as pd
 from recommender import SongRecommender
 import numpy as np
+import warnings
+
+warnings.filterwarnings("ignore")
 
 class GroupRecommender():
     """Playlist recommender system for groups."""
@@ -36,6 +39,8 @@ class GroupRecommender():
         updated.drop(columns = ['Unnamed: 0','timestamp'],inplace=True)
 
         updated['rating'] = np.where(pd.notnull(updated['rating_new']), updated['rating_new'], updated['rating'])
+        # # # Modify here
+        # updated['known'] = np.where(pd.notnull(updated['rating_new']), updated['rating_new'], updated['rating'])
         updated.drop('rating_new', axis=1, inplace=True)
         
         self.predictions = updated
@@ -57,6 +62,28 @@ class GroupRecommender():
         self.rankings = rankings
         
         return self
+    
+    def track_artist_names(df):
+        """Extract song_title and artist_name for tracks in given DataFrame
+
+        Args:
+            df (pandas DataFrame): DataFrame of top recommended songs
+
+        Returns:
+            pandas DataFrame: Initial DataFrame with additional song_title, artist_name columns
+        """    
+        
+        # read in map of track_id to artist_name and song_title
+        names = pd.read_csv('data/track_artist_names.txt',sep = '<SEP>',header=None)
+        
+        # drop unnecessary column and rename columns
+        names.drop(columns = [0], inplace = True)
+        names.rename(columns={1: "track_id", 2: "artist_name", 3: "song_title"},inplace=True)
+        
+        # Merge on track id to add new columns
+        df = pd.merge(df, names, on = 'track_id',how='left')
+        
+        return df
 
     def rec_group_playlist(self,strategy='lm'):
         rankings = self.rankings
@@ -80,7 +107,11 @@ class GroupRecommender():
             strat_col = 'worst_rnk' # default is least misery strategy
         
         top_songs = rankings.sort_values(strat_col)[:self.num_songs]
+        top_songs = self.track_artist_names(top_songs)
         
+        top_songs.insert(0, 'artist_name', top_songs['artist_name'])
+        top_songs.insert(1, 'song_title', top_songs['song_title'])
+
         print(top_songs)
         
         return top_songs
