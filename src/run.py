@@ -40,14 +40,19 @@ if __name__ == "__main__":
     # Reading TRAIN SET from input file into pandas
     train_data = pd.read_csv(path_train_)
 
-    # Creating an instance of your recommender with the right parameters
-    reco_instance = SongRecommender(model_name_)
+    if model_name_ == 'default':
+        global_mean = train_data['rating'].mean()
+        result_data = request_data.drop(columns=['timestamp'])
+        result_data['rating'] = global_mean
+    else:
+        # Creating an instance of your recommender with the right parameters
+        reco_instance = SongRecommender(model_name_)
 
-    # fits on training data, returns a MovieRecommender object
-    model = reco_instance.fit(train_data)
+        # fits on training data, returns a MovieRecommender object
+        model = reco_instance.fit(train_data)
 
-    # apply predict on request_data, returns a dataframe
-    result_data = model.transform(request_data)
+        # apply predict on request_data, returns a dataframe
+        result_data = model.transform(request_data)
 
     # test if the format of results is ok
     if (result_data.shape[0] != request_data.shape[0]) or (result_data.shape[1] != 3):

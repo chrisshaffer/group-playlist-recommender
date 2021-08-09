@@ -63,7 +63,7 @@ class GroupRecommender():
         
         return self
     
-    def track_artist_names(df):
+    def track_artist_names(self,df):
         """Extract song_title and artist_name for tracks in given DataFrame
 
         Args:
@@ -90,27 +90,37 @@ class GroupRecommender():
         
         rank_cols = [col for col in rankings.columns if 'rank' in col]
 
-        # Least misery strategy
-        rankings['worst_rnk'] = rankings[rank_cols].max(axis=1)
-
-        # Average rank strategy
-        rankings['avg_rnk'] = rankings[rank_cols].mean(axis=1)
-
-        # Most pleasure strategy
-        rankings['best_rnk'] = rankings[rank_cols].min(axis=1)
-
         if strategy == 'mp':
+             # Most pleasure strategy
+            rankings['best_rnk'] = rankings[rank_cols].min(axis=1)
             strat_col = 'best_rnk'
         elif strategy == 'avg':
+            # Average rank strategy
+            rankings['avg_rnk'] = rankings[rank_cols].mean(axis=1)
             strat_col = 'avg_rnk'
         else:
+            # Least misery strategy
+            rankings['worst_rnk'] = rankings[rank_cols].max(axis=1)
             strat_col = 'worst_rnk' # default is least misery strategy
         
         top_songs = rankings.sort_values(strat_col)[:self.num_songs]
         top_songs = self.track_artist_names(top_songs)
         
-        top_songs.insert(0, 'artist_name', top_songs['artist_name'])
-        top_songs.insert(1, 'song_title', top_songs['song_title'])
+        # Rearrange dataframe to be presentable
+        top_songs.insert(0, 'artist_name', top_songs.pop('artist_name'))
+        top_songs.insert(1, 'song_title', top_songs.pop('song_title'))
+        
+        top_songs.drop(columns=['track_id'],inplace=True)
+        rating_cols = [col for col in rankings.columns if 'rating' in col]
+        top_songs.drop(columns=rating_cols,inplace=True)
+        
+        char_lim = 30
+        top_songs['artist_name'] = top_songs['artist_name'].transform(lambda x: 
+                    x[:char_lim] + '...' 
+                    if len(x) > char_lim+1 else x)
+        top_songs['song_title'] = top_songs['song_title'].transform(lambda x: 
+                    x[:char_lim] + '...' 
+                    if len(x) > char_lim+1 else x)
 
         print(top_songs)
         
@@ -119,11 +129,12 @@ class GroupRecommender():
 if __name__ == '__main__':
     # Initial parameters
     user_ids = ['d1ca8b3e78811238cf94ee7caa1868d7ae9e908a',
-            '621659a10f52dc4f8b50f205ab85b6d6b7d1b0dc']
+            '621659a10f52dc4f8b50f205ab85b6d6b7d1b0dc',
+            'fef771ab021c200187a419f5e55311390f850a50']
     num_songs = 5
-    train_path = 'data/train_80_20.csv'
-    strategy = 'lm'
-    save_path = 'data/results/rankings.csv'
+    train_path = 'data/train.csv'
+    strategy = 'mp'
+    save_path = 'data/results/rankings_svd.csv'
     
     reco = GroupRecommender(user_ids,num_songs)
     
@@ -135,5 +146,5 @@ if __name__ == '__main__':
     
     top_songs = reco.rec_group_playlist(strategy)
     
-    top_songs.to_csv(save_path)
+    top_songs.to_csv(save_path,index='False')
     
