@@ -1,6 +1,5 @@
 import pickle
 import pandas as pd
-from recommender import SongRecommender
 import numpy as np
 import warnings
 
