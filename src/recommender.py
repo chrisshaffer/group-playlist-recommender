@@ -39,6 +39,7 @@ class SongRecommender():
                                        reader=Reader(rating_scale = (1,5)))
         self.trainset = ratings.build_full_trainset()
         
+        # Choose model class based on model_name
         if self.model_name == 'svd':
             self.algo = SVD(lr_all=0.001,n_epochs=125)
         elif self.model_name == 'slopeone':

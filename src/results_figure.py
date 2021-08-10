@@ -5,8 +5,11 @@ import seaborn as sns
 
 rcParams.update({'font.size': 18})
 
+# Load results.csv file
 results = pd.read_csv('data/results/results.csv')
 
+# If hyperparameters = True, generate SVD hyperparameters bar plot
+# If hyperparameters = False, generate model comparison bar plot
 hyperparameters = False
 
 if hyperparameters == False:

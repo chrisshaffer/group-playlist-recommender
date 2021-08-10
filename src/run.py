@@ -7,6 +7,7 @@ from log import configure_logging
 import pickle
 
 if __name__ == "__main__":
+    # Parsing arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--train", help="path to training ratings file (to fit)")
     parser.add_argument("--requests", help="path to the input requests (to predict)")
@@ -31,7 +32,6 @@ if __name__ == "__main__":
 
     model_name_ = args.model_name if args.model_name else "svd"
     logger.debug("using model: {}".format(model_name_))
-
 
     logger.debug("using output as {}".format(args.outputfile[0]))
 
@@ -59,6 +59,8 @@ if __name__ == "__main__":
                 model = pickle.load( open( path, "rb" ) )
                 result_dfs.append(model.transform(request_data))
                 
+            # Designate weights based on val set RMSE relative to
+            #   global mean RMSE, and normalize
             global_mean_rmse = 1.3706
             cocluster_weight = 1.3706 - 1.255
             nmf_weight = 1.3706 - 1.2716

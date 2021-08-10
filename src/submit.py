@@ -21,16 +21,6 @@ def compute_score(predictions, actual):
     # return the mean of the actual score on those
     return df.actualrating[top_5==1].mean()
     
-    # # for each user
-    # g = df.groupby(['user_id','track_id'])
-    # # # detect the top_5 % as predicted by your algorithm
-    # top_5 = g.rating.transform(
-    #     lambda x: x >= x.quantile(.95)
-    # )
-
-    # # return the mean of the actual score on those
-    # return df.rating[g==1].mean()
-    
 def compute_rmse(predictions, actual):
     # RMSE between predictions and actual ratings
 
@@ -60,10 +50,16 @@ if __name__ == "__main__":
 
     logger.debug("using predictions from {}".format(args.predfile[0]))
     
+    # Load predictions data
     prediction_data = pd.read_csv(args.predfile[0])
+    
+    # Load actual validation data
     actual_data = pd.read_csv(path_testing_)
 
+    # Compute score based on mean of top 5% of each users song rankings
     score = compute_score(prediction_data, actual_data)
+    
+    # Compute RMSE between prediction and actual data
     rmse = compute_rmse(prediction_data, actual_data)
     print(score)
     logger.debug("score={}".format(score))
@@ -71,6 +67,8 @@ if __name__ == "__main__":
     logger.debug("rmse={}".format(rmse))
     
     fields=[args.predfile[0],round(score,4),round(rmse,4)]
+    
+    # Save results to csv file
     with open(r'data/results/results.csv', 'a') as f:
         writer = csv.writer(f)
         writer.writerow(fields)

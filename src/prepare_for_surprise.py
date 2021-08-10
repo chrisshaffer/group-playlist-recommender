@@ -10,8 +10,8 @@ def tt_preprocess():
     tt.plays = tt.plays.transform(lambda x: 24 if x > 24 else x)
 
     # Create 'rating' column based on log(plays/max_plays) transformed to 1-5 scale
-    # print(np.log10(tt.plays))
     tt['rating'] = np.log10(tt.plays)/np.log10(tt['plays'].max())*5+1
+    
     # Include only top 250 tracks (11% of total data, ~4.8 millions entries)
     top_tracks = tt['track_id'].value_counts()[:250].index.tolist()
     tt = tt[tt['track_id'].isin(top_tracks)]

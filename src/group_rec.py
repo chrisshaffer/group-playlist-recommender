@@ -15,13 +15,21 @@ class GroupRecommender():
         self.ensemble = ensemble
 
     def score_for_users(self,train_path):
+        """Loads a trained model and predicts ratings for all tracks for given users
+
+        Args:
+            train_path (str): path to training data csv file
+
+        Returns:
+            self: GroupRecommender class instance
+        """        
         self.train = pd.read_csv(train_path)
         
         track_list = self.train['track_id'].unique()
         
         df = pd.DataFrame(columns = self.user_ids, index = track_list).reset_index()
         
-        request_data = pd.melt(df, id_vars = 'index', value_vars=user_ids)
+        request_data = pd.melt(df, id_vars = 'index', value_vars=self.user_ids)
         request_data.rename(columns={'index': 'track_id', 'variable': 'user_id', 'value': 'rating'},inplace=True)
         request_data = request_data[['user_id', 'track_id', 'rating']]
         request_data['timestamp'] = 0
@@ -57,6 +65,11 @@ class GroupRecommender():
         return self
         
     def impute_knowns(self):
+        """Imputes actual ratings into prediction ratings for known entries
+
+        Returns:
+            self: GroupRecommender class instance
+        """        
         updated = self.predictions.merge(self.train, how='left', on=['user_id', 'track_id'],
                             suffixes=('', '_new'))
         updated.drop(columns = ['Unnamed: 0','timestamp'],inplace=True)
@@ -71,6 +84,12 @@ class GroupRecommender():
         return self
         
     def create_rankings(self):
+        """For each user, sorts the ratings column, and replaces it with indices
+            indicating the ranking of the entries
+
+        Returns:
+            self: GroupRecommender class instance
+        """        
         dfs = []
         for idx, user_id in enumerate(self.user_ids):
             sorted_by_rating = self.predictions[self.predictions['user_id'] == user_id].sort_values(
@@ -109,6 +128,14 @@ class GroupRecommender():
         return df
 
     def rec_group_playlist(self,strategy='lm'):
+        """Applies a strategy to generate group rankings using the individual rankings
+
+        Args:
+            strategy (str, optional): Name of group ranking strategy. Defaults to 'lm'.
+
+        Returns:
+            pandas DataFrame: DataFrame of recommended songs with rankings
+        """        
         rankings = self.rankings
         
         rank_cols = [col for col in rankings.columns if 'rank' in col]
