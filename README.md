@@ -1,1 +1,1 @@
-# couples-playlist-recommender
+# Group Playlist Recommender
