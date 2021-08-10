@@ -7,7 +7,7 @@ rcParams.update({'font.size': 18})
 
 results = pd.read_csv('data/results/results.csv')
 
-hyperparameters = True
+hyperparameters = False
 
 if hyperparameters == False:
     model_labels = ['SVD', 'NMF','KNN',
@@ -18,12 +18,6 @@ if hyperparameters == False:
 
     xlabel = 'Model Name'
     
-    model_labels = ['SVD', 'NMF','KNN',
-                        'Co-cluster','ALS Base','Normal','Global Mean']
-
-    models_names = results.name[results.name.str.contains(
-        'svd_default|nmf|knn|cocluster|baseline|normal|global_mean')]
-    
     comparison = results[results.name.isin(models_names)]
 
     comparison['label'] = model_labels
@@ -31,15 +25,15 @@ if hyperparameters == False:
 
     fig,ax = plt.subplots(figsize=(13,6))
     plt.bar(comparison['label'],comparison['rmse'],color = sns.color_palette("husl", 7))
-    plt.xlabel('xlabel')
+    plt.xlabel('Model Type')
     plt.ylabel('RMSE')
 
     plt.show(block=False)
-    plt.savefig('img/rmse_comparison.jpg')
+    plt.savefig('img/rmse_comparison_no_ensemble.jpg')
     plt.close('all')
 
-    comparison = comparison.iloc[:,[3,2]]
-    comparison.to_csv('data/results/comparison_results.csv',index=False)
+    # comparison = comparison.iloc[:,[3,2]]
+    # comparison.to_csv('data/results/comparison_results.csv',index=False)
 else:
     hyp_names = results.name[results.name.str.contains(
         'svd|pred.csv')]

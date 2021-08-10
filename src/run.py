@@ -4,6 +4,7 @@ import argparse
 from recommender import SongRecommender
 import pandas as pd
 from log import configure_logging
+import pickle
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -48,11 +49,32 @@ if __name__ == "__main__":
         # Creating an instance of your recommender with the right parameters
         reco_instance = SongRecommender(model_name_)
 
-        # fits on training data, returns a MovieRecommender object
-        model = reco_instance.fit(train_data)
+        if model_name_ == 'ensemble':
+            # Load ensemble of models for predictions
+            model_paths = ['data/model_cocluster_8020split.p',
+                           'data/model_nmf_8020split.p',
+                           'data/model_svd_lr001_epochs125_8020split.p']
+            result_dfs = []
+            for path in model_paths:
+                model = pickle.load( open( path, "rb" ) )
+                result_dfs.append(model.transform(request_data))
+                
+            global_mean_rmse = 1.3706
+            cocluster_weight = 1.3706 - 1.255
+            nmf_weight = 1.3706 - 1.2716
+            svd_weight = 1.3706 - 1.1934
+            result_dfs[0]['rating'] = \
+                (result_dfs[0]['rating']*cocluster_weight + \
+                    result_dfs[1]['rating']*nmf_weight + \
+                        result_dfs[2]['rating']*svd_weight)/ \
+                            (cocluster_weight + nmf_weight + svd_weight)
+            result_data = result_dfs[0]
+        else:
+            # fits on training data, returns a MovieRecommender object
+            model = reco_instance.fit(train_data)
 
-        # apply predict on request_data, returns a dataframe
-        result_data = model.transform(request_data)
+            # apply predict on request_data, returns a dataframe
+            result_data = model.transform(request_data)
 
     # test if the format of results is ok
     if (result_data.shape[0] != request_data.shape[0]) or (result_data.shape[1] != 3):

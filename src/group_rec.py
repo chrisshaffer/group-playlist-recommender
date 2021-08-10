@@ -9,16 +9,15 @@ warnings.filterwarnings("ignore")
 class GroupRecommender():
     """Playlist recommender system for groups."""
 
-    def __init__(self,user_ids,num_songs=5):
+    def __init__(self,user_ids,num_songs=5,ensemble=True):
         """Constructs a GroupRecommender"""
         self.user_ids = user_ids
         self.num_songs = num_songs
+        self.ensemble = ensemble
 
     def score_for_users(self,train_path):
         self.train = pd.read_csv(train_path)
         
-        model = pickle.load( open( "data/model.p", "rb" ) )
-
         track_list = self.train['track_id'].unique()
         
         df = pd.DataFrame(columns = self.user_ids, index = track_list).reset_index()
@@ -27,9 +26,34 @@ class GroupRecommender():
         request_data.rename(columns={'index': 'track_id', 'variable': 'user_id', 'value': 'rating'},inplace=True)
         request_data = request_data[['user_id', 'track_id', 'rating']]
         request_data['timestamp'] = 0
+        
+        if self.ensemble:
+            # Load ensemble of models for predictions
+            model_paths = ['data/model_cocluster.p',
+                           'data/model_nmf.p',
+                           'data/model_svd_lr001_epochs125.p']
+            result_dfs = []
+            for path in model_paths:
+                model = pickle.load( open( path, "rb" ) )
+                result_dfs.append(model.transform(request_data))
+                
+            global_mean_rmse = 1.3706
+            cocluster_weight = global_mean_rmse - 1.255
+            nmf_weight = global_mean_rmse - 1.2716
+            svd_weight = global_mean_rmse - 1.1934
+            result_dfs[0]['rating'] = \
+                (result_dfs[0]['rating']*cocluster_weight + \
+                    result_dfs[1]['rating']*nmf_weight + \
+                        result_dfs[2]['rating']*svd_weight)/ \
+                            (cocluster_weight + nmf_weight + svd_weight)
+                            
+            self.predictions = result_dfs[0]
+        else:
+            # Use best SVD model
+            model = pickle.load( open( "data/model_svd_lr001_epochs125.p", "rb" ) )
 
-        # Predict for request_data, returns a dataframe
-        self.predictions = model.transform(request_data)
+            # Predict for request_data, returns a dataframe
+            self.predictions = model.transform(request_data)
         
         return self
         
@@ -130,13 +154,15 @@ if __name__ == '__main__':
     # Initial parameters
     user_ids = ['d1ca8b3e78811238cf94ee7caa1868d7ae9e908a',
             '621659a10f52dc4f8b50f205ab85b6d6b7d1b0dc',
-            'fef771ab021c200187a419f5e55311390f850a50']
+            '257fc9ff00cd0ac79f53c7d65510b2ebba0c6b8e']
+
     num_songs = 5
     train_path = 'data/train.csv'
-    strategy = 'mp'
-    save_path = 'data/results/rankings_svd.csv'
+    strategy = 'avg'
+    save_path = 'data/results/rankings_avg.csv'
+    ensemble = False
     
-    reco = GroupRecommender(user_ids,num_songs)
+    reco = GroupRecommender(user_ids,num_songs,ensemble)
     
     reco.score_for_users(train_path)
     
