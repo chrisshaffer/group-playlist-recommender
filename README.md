@@ -103,28 +103,20 @@ A presentation summarizing the data analysis and results can be found [here](htt
 This project explores the [Echo Nest Taste Profiles](http://millionsongdataset.com/tasteprofile/) subset of the [Million Song Dataset](http://millionsongdataset.com/). A reference paper explaining the dataset is:
 
   Thierry Bertin-Mahieux, Daniel P.W. Ellis, Brian Whitman, and Paul Lamere. 
-
   [The Million Song Dataset](http://www.columbia.edu/~tb2332/Papers/ismir11.pdf). In Proceedings of the 12th International Society
-
   for Music Information Retrieval Conference (ISMIR 2011), 2011.
 
 The Taste Profiles dataset contains:
 
-1,019,318 unique users
+* 1,019,318 unique users
+* 384,546 unique songs
+* 48,373,586 entries
 
-384,546 unique songs
-
-48,373,586 entries
-
-The main table is in the format
-
-user – song ID –  play counts
+The main table is in the format: user – song ID –  play counts
 <p align="center">
-  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/example_df.png" width="1000" />
+  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/example_df.png" width="600" />
 </p>
-The song information table follows the format:
-
-song id – song title – artist
+The song information table follows the format: song id – song title – artist
 
 ## Project Details
 
@@ -136,30 +128,30 @@ The play counts per user-song pair ranged from 1 to 10,000, which is a large dyn
 
 To deal with the large dynamic range, first I took the logarithm (base-10) of the plays. The play count distribution is shown below:
 <p align="center">
-  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/plays_hist_annot.png" width="600" />
+  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/plays_hist_annot.png" width="450" />
 </p>
 Even after this transformation, the distribution was heavily weighted toward zero, and had a very long tail. I found that only 1% of play counts exceeded 24, so I designated this as the ceiling. I normalized the play counts by this new maximum, took the logarithm, and then mapped them to a 1-5 scale for interpretability. See the equation below:
 <p align="center">
-  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/rating_eq.png?raw=true" width="1000" />
+  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/rating_eq.png?raw=true" width="300" />
 </p>
 Here is the distribution of generated ratings:
 <p align="center">
-  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/rating_hist_annot.png?raw=true" width="600" />
+  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/rating_hist_annot.png?raw=true" width="450" />
 </p>
-INSERT TABLE
+
 #### Sparsity
-Most (99.99%) user-song pairs were missing, from the dataset, as the users only listened to a small fraction of the ~400,000 songs. When the sparsity is too high, learning algorithms have difficulty determining the underlying patterns. I simplified the problem by reducing the dataset to the top 250 songs. This does detract from the real world practicality, but could be remedied in the future by adding more complex song and user information to the training data. This reduced the sparcity from 99.99% to 97%, and retained 11% of the dataset.
+Most (99.99%) user-song pairs were missing from the dataset, as the users only listened to a small fraction of the ~400,000 songs. When the sparsity is too high, learning algorithms have difficulty determining the underlying patterns. I simplified the problem by reducing the dataset to the top 250 songs. This does detract from the real world practicality, but could be remedied in the future by adding more complex song and user information to the training data to improve model predictions. This reduced the sparcity from 99.99% to 97%, and retained 11% of the dataset.
 <p align="center">
-  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/track_popularity_annot.png?raw=true" width="800" />
+  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/track_popularity_annot.png?raw=true" width="400" />      
   <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/play_dist_table.png?raw=true" width="200" />
 </p>
-INSERT TABLE
+
 ## Modeling 
-To train and test different models, I split the data into a random 80/20 train/validation split. All of the models I tested were from the [Surprise](http://surpriselib.com/). Python library for recommender systems. A brief description of the each model algorithm is below, and more information can be found [here](https://surprise.readthedocs.io/en/stable/).
+To train and test different models, I split the data into a random 80/20 train/validation split. All of the models I tested were from the [Surprise](http://surpriselib.com/) Python library for recommender systems. A brief description of the each model algorithm is below, and more information can be found [here](https://surprise.readthedocs.io/en/stable/).
 * Normal
-  * Fits the ratings to a normal distribution and randomly generates ratings from this distribution. This is a baseline model for comparing other models too.
+  * Fits the ratings to a normal distribution and randomly generates ratings from this distribution. This is a baseline model for comparing other models to.
 * Global Mean
-  * Assigns the global average rating to each prediction. This is another baseline model.
+  * Assigns the global average rating to each prediction. This is an alternative baseline model.
 * K-Nearest Neighbors (KNN)
   * Predictions are based on the average values from the k nearest neighbors. 
 * Nonnegative Matrix Factorization (NMF)
@@ -178,15 +170,17 @@ Additionally I combined 3 of the best performing models into an ensemble model. 
 Here are the results of all of the models, using root-mean-square error of predicted versus actual ratings.
 <p align="center">
   <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/ensemble_performance.png?raw=true" width="1000" />
-  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/model_comparison_table.png?raw=true" />
+  
+  
+  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/model_comparison_table.png?raw=true" width="200" />
 </p>
 
 Additionally, I optimized the hyperparameters of the SVD model, both for its use as a standalone model and as part of the ensemble model. I varied the learning rate and number of epochs. I also varied the number of factors in the SVD matrix, but it showed little effect. Below is the error as a function of learning rate and number of epochs.
 <p align="center">
-  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/rmse_svd_hyp.jpg?raw=true" width="1000" />
-  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/hyperparameter_table.png?raw=true" width="200" />
+  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/rmse_svd_hyp.jpg?raw=true" width="600" />
+  <img src="https://github.com/chrisshaffer/group-playlist-recommender/blob/main/img/hyperparameter_table.png?raw=true" width="300" />
 </p>
-The results showed that a low learning rate (0.001) with a high number of epochs (125). Pushing these values toward more extremes may offer marginal improvement in performance, but the training time increases nonlinearly, so I stopped there.
+The results showed that a low learning rate (0.001) with a high number of epochs (125) performed the best. Pushing these values toward more extremes may offer marginal improvement in performance, but the training time increases nonlinearly, so I stopped there.
 
 ### Song Rankings
 I trained the model on all of the data in preparation for generating recommendations. The ranking algorithm is as follows. For a user, ratings for all 250 songs are predicted by the model. The known song ratings are imputed into the predictions, constituting ~3% of the predictions. The ratings are then sorted, and assigned a ranking of 0-249, where 0 is the ranking of the highest rated song.
@@ -208,8 +202,8 @@ Last, the downside of the "least misery strategy" is that it may generate recomm
 </p>
 
 The strategies and their descriptions were adapted from [this](https://core.ac.uk/download/pdf/55759488.pdf) reference paper:
-De Pessemier, T., Dooms, S. & Martens, L. Comparison of group recommendation algorithms. 
 
+De Pessemier, T., Dooms, S. & Martens, L. Comparison of group recommendation algorithms. 
 Multimed Tools Appl 72, 2497–2541 (2014). https://doi.org/10.1007/s11042-013-1563-0
 
 ## Future Work
@@ -221,7 +215,6 @@ This prototype was completed in a limited timespan, but can be improved in the f
   * Harmony, or extra weighting toward item similarity in recommendations
   * Serendipity, or recommendations novel to users, but still enjoyed by them
 
-=
 <!-- Contact -->
 ## Contact
 
